@@ -16,6 +16,7 @@
 
         buildDeps = with pkgs; [
           cmake
+          ruby
         ];
 
         dev_tools = with pkgs; [
