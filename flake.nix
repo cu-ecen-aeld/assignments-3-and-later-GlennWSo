@@ -20,6 +20,7 @@
         ];
 
         dev_tools = with pkgs; [
+          clang-tools
         ];
       in
       with pkgs;
