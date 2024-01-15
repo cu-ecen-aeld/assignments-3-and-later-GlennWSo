@@ -1,0 +1,3 @@
+Using built-in specs.
+COLLECT_GCC=/nix/store/wkj7lh1a988s1xjy3r7jqg9nr4vip5ix-aarch64-unknown-linux-gnu-gcc-12.3.0/bin/aarch64-unknown-linux-gnu-gcc
+COLLECT_LTO_WRAPPER=/nix/store/wkj7lh1a988s1xjy3r7jqg9nr4vip5ix-aarch64-unknown-linux-gnu-gcc-12.3.0/libexec/gcc/aarch64-unknown-linux-gnu/12.3.0/lto-wrapper

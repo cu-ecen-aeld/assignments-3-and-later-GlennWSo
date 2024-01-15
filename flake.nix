@@ -11,6 +11,7 @@
       let
         pkgs = import nixpkgs {
           inherit system;
+          crossSystem.config = "aarch64-unknown-linux-gnu";
         };
 
 
