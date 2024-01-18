@@ -9,13 +9,16 @@
   outputs = { self, nixpkgs,  flake-utils}:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
+        cross_pkgs = import nixpkgs {
           inherit system;
           crossSystem.config = "aarch64-unknown-linux-gnu";
         };
 
+        pkgs = import nixpkgs {
+          inherit system;
+        };
 
-        buildDeps = with pkgs; [
+        buildDeps = with cross_pkgs; [
           cmake
           ruby
         ];
@@ -24,11 +27,12 @@
           clang-tools
         ];
       in
-      with pkgs;
+      with cross_pkgs;
       {
         devShells.default = mkShell {
           name = "advanded embedded linux"; 
-          buildInputs = buildDeps ++ dev_tools;
+          buildInputs = buildDeps;
+          nativeBuildInputs= dev_tools;
           shellHook = ''
             echo hi
           '';
