@@ -27,7 +27,7 @@
       with pkgs;
       {
         devShells.default = mkShell {
-          name = "rust graphics env"; 
+          name = "advanded embedded linux"; 
           buildInputs = buildDeps ++ dev_tools;
           shellHook = ''
             echo hi
