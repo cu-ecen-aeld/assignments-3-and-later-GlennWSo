@@ -5,3 +5,6 @@ allways:
 
 hello.o: hello.c
 	gcc hello.c -o hello.o
+
+clean:
+	rm hello.o
