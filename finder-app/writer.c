@@ -1,20 +1,22 @@
 #include <stdio.h>
 int main(int argc, char *argv[]) {
    
-   argc -= 1;
 
-   if (argc != 2) {
+   if (argc != 3) {
       printf("%s requires 2 args\n", argv[0]);
       printf("arg count is: %i\n", argc);
-      for (int i=1; i < argc + 1; i++) {
+      for (int i=1; i < argc; i++) {
          printf("arg%i: %s\n", i, argv[i]);
        }
       return 1;
    }
+
+   char *writepath = argv[1];
+   char *writestr = argv[2];
    
    FILE *file;
-   file = fopen("tmp/hello.txt", "w");
-   fprintf(file, "Hello, World!");
+   file = fopen(writepath, "w");
+   fprintf(file, "%s", writestr);
    fclose(file);
    return 0;
 }
