@@ -7,3 +7,4 @@ aesd-build
 .vscode/
 test.sh.log
 .direnv
+tmp/
