@@ -1,7 +1,9 @@
 #include <stdio.h>
 int main() {
-   // printf() displays the string inside quotation
-   printf("Hello, World!");
+   FILE *file;
+   file = fopen("tmp/hello.txt", "w");
+   fprintf(file, "Hello, World!");
+   fclose(file);
    return 0;
 }
 
