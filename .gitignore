@@ -8,3 +8,4 @@ aesd-build
 test.sh.log
 .direnv
 tmp/
+log_target.txt
