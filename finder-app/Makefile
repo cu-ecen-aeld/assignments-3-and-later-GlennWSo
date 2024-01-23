@@ -6,9 +6,6 @@ writer: writer.c
 	if [ ${CROSS_COMPILE} == "aarch64-unknown-linux-gnu-" ]; then \
 		file writer > ../assignments/assignment2/fileresult.txt; \
 	fi; 
- 
-
 
 clean:
-	rm writer ../log_target.txt
-
+	rm writer
