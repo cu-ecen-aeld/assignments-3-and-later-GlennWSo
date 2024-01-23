@@ -1,1 +1,1 @@
-writer: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /nix/store/9y8pmvk8gdwwznmkzxa6pwyah52xy3nk-glibc-2.38-27/lib/ld-linux-x86-64.so.2, for GNU/Linux 3.10.0, not stripped
+writer: ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /nix/store/dmdjg1r6120l6xgyclvpwk1l9bs0k268-glibc-aarch64-unknown-linux-gnu-2.38-27/lib/ld-linux-aarch64.so.1, for GNU/Linux 3.10.0, not stripped
