@@ -1,4 +1,9 @@
 #include "systemcalls.h"
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 /**
  * @param cmd the command to execute with system()
