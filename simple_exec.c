@@ -5,8 +5,9 @@
 
 
 int main(){
-	char* args[] = {"hello", "world"};
+	char* args[] = {"echo","hello", "world", NULL};
 	int res = execv("/nix/store/zx8aqgdy735qzk81glfwil6mbi6ddqb1-coreutils-9.4/bin/echo", args);
-	printf("res: %s", res);
+	printf("res: %i", res);
+	perror("execv");
 	return 1;
 }
