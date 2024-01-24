@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -42,6 +43,7 @@ bool do_exec(int count, ...)
     for(i=0; i<count; i++)
     {
         command[i] = va_arg(args, char *);
+        printf("command[%i]: %s\n", i, command[i]);
     }
     command[count] = NULL;
     // this line is to avoid a compile warning before your implementation is complete
@@ -63,6 +65,9 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+
+    // refrence https://stackoverflow.com/questions/19099663/how-to-correctly-use-fork-exec-wait
+    
     int pid = fork();
     if (pid == -1) {
         perror("fork");
@@ -72,14 +77,18 @@ bool do_exec(int count, ...)
     // child
     if (pid == 0) {
         int res = execv(command[0], &command[1]);
-        if (res == -1) {
-            perror("exec");
-        }
-        return false;
+        perror("exec");
+        exit(errno);
     } else {
-        pid = wait(NULL);
+        int exit_status;
+        pid = waitpid(pid, &exit_status, 0);
         if (pid == -1){
             perror("wait");
+            return false;
+        }
+        if (exit_status) {
+            printf("child failed with: %s", strerror(exit_status));
+            return false;
         }
     }
 
@@ -121,7 +130,6 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
     int res = (dup2(fd, 1) != -1);
     if (!res) {
         return false;
-        
     }
     
     res = do_exec(count, args);
