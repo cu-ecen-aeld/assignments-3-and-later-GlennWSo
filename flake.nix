@@ -25,6 +25,8 @@
 
         dev_tools = with pkgs; [
           clang-tools
+          cmake
+          ruby
         ];
       in
       with cross_pkgs;
