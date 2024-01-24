@@ -1,6 +1,7 @@
 #include "systemcalls.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
@@ -76,7 +77,7 @@ bool do_exec(int count, ...)
 
     // child
     if (pid == 0) {
-        execv(command[0], &command[1]);
+        execv(command[0], &command[0]);
         perror("exec");
         exit(errno);
     } else {
@@ -125,7 +126,39 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
-    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+    int pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        return false;
+    }
+
+    // child
+    if (pid == 0) {
+        int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+        if (fd == -1){
+            perror("open");
+            exit(1);
+        }
+        int fd2 =dup2(fd, 1);
+        if (fd2 == -1){
+            perror("dup2");
+            exit(1);
+        }
+        execv(command[0], &command[0]);
+        perror("exec");
+        exit(1);
+    } else {
+        int exit_status;
+        pid = waitpid(pid, &exit_status, 0);
+        if (pid == -1){
+            perror("wait");
+            return false;
+        }
+        if (exit_status) {
+            printf("child failed\n");
+            return false;
+        }
+    }
 
     int res = (dup2(fd, 1) != -1);
     if (!res) {
