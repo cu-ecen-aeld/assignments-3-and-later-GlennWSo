@@ -160,14 +160,8 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
         }
     }
 
-    int res = (dup2(fd, 1) != -1);
-    if (!res) {
-        return false;
-    }
-    
-    res = do_exec(count, args);
 
     va_end(args);
 
-    return res;
+    return true;
 }
