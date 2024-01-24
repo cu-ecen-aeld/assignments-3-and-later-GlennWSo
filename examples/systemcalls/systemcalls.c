@@ -63,6 +63,25 @@ bool do_exec(int count, ...)
  *   as second argument to the execv() command.
  *
 */
+    int pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        return false;
+    }
+
+    // child
+    if (pid == 0) {
+        int res = execv(command[0], &command[1]);
+        if (res == -1) {
+            perror("exec");
+        }
+        return false;
+    } else {
+        pid = wait(NULL);
+        if (pid == -1){
+            perror("wait");
+        }
+    }
 
     va_end(args);
 
