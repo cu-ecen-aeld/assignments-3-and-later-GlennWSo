@@ -76,7 +76,7 @@ bool do_exec(int count, ...)
 
     // child
     if (pid == 0) {
-        int res = execv(command[0], &command[1]);
+        execv(command[0], &command[1]);
         perror("exec");
         exit(errno);
     } else {
@@ -87,7 +87,7 @@ bool do_exec(int count, ...)
             return false;
         }
         if (exit_status) {
-            printf("child failed with: %s", strerror(exit_status));
+            printf("child failed\n");
             return false;
         }
     }
