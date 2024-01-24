@@ -116,8 +116,17 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
  *   The rest of the behaviour is same as do_exec()
  *
 */
+    int fd = open(outputfile, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+
+    int res = (dup2(fd, 1) != -1);
+    if (!res) {
+        return false;
+        
+    }
+    
+    res = do_exec(count, args);
 
     va_end(args);
 
-    return true;
+    return res;
 }
