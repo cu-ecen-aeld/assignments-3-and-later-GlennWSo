@@ -1,13 +1,11 @@
-// #include "examples/systemcalls/systemcalls.h"
+#include "examples/systemcalls/systemcalls.h"
 // #include <cstdlib>
 #include <stdio.h>
 #include <unistd.h>
 
 
-int main(){
-	char* args[] = {"echo", "hello", "world", NULL};
-	int res = execv("/usr/bin/env", args);
-	printf("res: %i", res);
-	perror("execv");
-	return 1;
+int main() {
+	// char* args[] = {"/usr/bin/env", "echo", "hello", "world", NULL};
+	bool res = do_exec(4, "/usr/bin/env", "echo", "hello", "world");
+	printf("do_exec returned: %b", res);
 }
