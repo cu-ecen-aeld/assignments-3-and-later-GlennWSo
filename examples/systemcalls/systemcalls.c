@@ -48,6 +48,12 @@ bool do_exec(int count, ...)
     // and may be removed
     command[count] = command[count];
 
+    if (count < 1) {
+        // gaurd against invalid arguments;
+        errno = EINVAL;
+        return false;
+    }
+
 /*
  * TODO:
  *   Execute a system command by calling fork, execv(),
