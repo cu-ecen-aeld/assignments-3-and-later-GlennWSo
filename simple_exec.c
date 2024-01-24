@@ -6,6 +6,6 @@
 
 int main() {
 	// char* args[] = {"/usr/bin/env", "echo", "hello", "world", NULL};
-	bool res = do_exec(4, "/usr/bin/env", "echo", "hello", "world");
-	printf("do_exec returned: %b", res);
+	bool res = do_exec_redirect("derp.txt", 3, "/usr/bin/env", "echo", "hi there");
+	printf("do_exec returned: %i", res);
 }
