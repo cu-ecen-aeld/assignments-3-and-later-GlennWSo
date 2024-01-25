@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Script outline to install and build kernel.
 # Author: Siddhant Jajoo.
 
