@@ -35,6 +35,14 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     git checkout ${KERNEL_VERSION}
 
     # TODO: Add your kernel build steps here
+    echo starting kernel build
+    # step 0: deep clean, removing the .config file with any existing configs
+    make mrproper
+    # create a default .config
+    make defconfig
+    echo derp
+    exit 0
+
 fi
 
 echo "Adding the Image in outdir"

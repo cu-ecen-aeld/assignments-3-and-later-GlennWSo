@@ -21,6 +21,15 @@
         buildDeps = with cross_pkgs; [
           cmake
           ruby
+          # derp
+          # getopt
+          # flex
+          # bison
+          # gcc
+          # gnumake
+          # bc
+          # pkg-config
+          # binutils
         ];
 
         dev_tools = with pkgs; [
@@ -29,6 +38,8 @@
           ruby
           pkg-config
           ncurses
+          flex
+          bison
         ];
 
         linux = pkgs.linux.overrideAttrs (o: {nativeBuildInputs=o.nativeBuildInputs ++ [ pkgs.pkg-config pkgs.ncurses ];});
