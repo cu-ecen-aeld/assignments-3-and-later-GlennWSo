@@ -27,18 +27,26 @@
           clang-tools
           cmake
           ruby
+          pkg-config
+          ncurses
         ];
+
+        linux = pkgs.linux.overrideAttrs (o: {nativeBuildInputs=o.nativeBuildInputs ++ [ pkgs.pkg-config pkgs.ncurses ];});
+
+        
       in
-      with cross_pkgs;
+      # with cross_pkgs;
       {
-        devShells.default = mkShell {
-          name = "advanded embedded linux"; 
+        devShells.default = cross_pkgs.mkShell {
+          name = "pure"; 
           buildInputs = buildDeps;
           nativeBuildInputs= dev_tools;
           shellHook = ''
             echo hi
           '';
         };
+
+        packages.menu = linux;
       }
     );
 }
