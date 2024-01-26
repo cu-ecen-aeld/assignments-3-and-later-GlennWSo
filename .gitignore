@@ -9,3 +9,4 @@ test.sh.log
 .direnv
 tmp/
 log_target.txt
+finder-app/out
