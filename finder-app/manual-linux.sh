@@ -91,8 +91,8 @@ make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE
 make CONFIG_PREFIX=$ROOTFS ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE install
 
 echo "Library dependencies"
-${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
-${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
+${CROSS_COMPILE}readelf -a busybox | grep "program interpreter"
+${CROSS_COMPILE}readelf -a busybox | grep "Shared library"
 
 # req interpreter: /lib/ld-linux-aarch64.so.1 needs to in /lib
 # req shared libs: libm.so.6 libresolv.so.2 libc.so.6 into /lib64
@@ -125,5 +125,8 @@ make CROSS_COMPILE=$CROSS_COMPILE writer
 cp writer $ROOTFS/home/writer
 
 # TODO: Chown the root directory
+cd $ROOTFS
+find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
+cd ..
+gzip -f initramfs.cpio
 
-# TODO: Create initramfs.cpio.gz
