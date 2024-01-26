@@ -72,12 +72,14 @@ mkdir -p usr/bin usr/lib usr/sbin var/log
 
 
 cd "$OUTDIR"
-if [ ! -d "${OUTDIR}/busybox" ]
+if [ ! -d "busybox" ]
 then
-git clone git://busybox.net/busybox.git
-    cd busybox
-    git checkout ${BUSYBOX_VERSION}
-    # TODO:  Configure busybox
+  git clone git://busybox.net/busybox.git
+  cd busybox
+  git checkout ${BUSYBOX_VERSION}
+  echo Configuring busybox
+  make distclean
+  make defconfig
 else
     cd busybox
 fi
