@@ -11,6 +11,7 @@ KERNEL_VERSION=v5.1.10
 BUSYBOX_VERSION=1_33_1
 FINDER_APP_DIR=$(realpath $(dirname $0))
 ARCH=arm64
+SYSROOT="$(aarch64-none-linux-gnu-gcc -print-sysroot)"
 CROSS_COMPILE=aarch64-none-linux-gnu-
 
 if [ $# -lt 1 ]
@@ -93,7 +94,16 @@ echo "Library dependencies"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "Shared library"
 
-# TODO: Add library dependencies to rootfs
+# req interpreter: /lib/ld-linux-aarch64.so.1 needs to in /lib
+# req shared libs: libm.so.6 libresolv.so.2 libc.so.6 into /lib64
+echo cp buzybox interpreter libs into rootfs
+buzy_interp="$(find $SYSROOT -name ld-linux-aarch64.so.1)"
+cp $buzy_interp $ROOTFS/lib
+libm="$(find $SYSROOT -name libm.so.6)"
+libresolv="$(find $SYSROOT -name libresolv.so.2)"
+libc="$(find $SYSROOT -name libc.so.6)"
+cp $libm $libresolv $libc $ROOTFS/lib64
+
 
 # TODO: Make device nodes
 
