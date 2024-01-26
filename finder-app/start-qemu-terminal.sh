@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 # Script to open qemu terminal.
 # Author: Siddhant Jajoo.
 
@@ -7,7 +7,7 @@ set -e
 OUTDIR=$1
 
 if [ -z "${OUTDIR}" ]; then
-    OUTDIR=/tmp/aeld
+    OUTDIR="$(realpath out)"
     echo "No outdir specified, using ${OUTDIR}"
 fi
 

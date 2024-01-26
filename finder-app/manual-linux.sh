@@ -30,7 +30,7 @@ if [ ! -d "linux-stable" ]; then
 	echo "CLONING GIT LINUX STABLE VERSION ${KERNEL_VERSION} IN ${OUTDIR}"
 	git clone ${KERNEL_REPO} --depth 1 --single-branch --branch ${KERNEL_VERSION}
 fi
-if [ ! -e linux-stable/arch/${ARCH}/boot/Image ]; then
+if [ ! -e $OUTDIR/Image ]; then
     cd linux-stable
     echo "Checking out version ${KERNEL_VERSION}"
     git checkout ${KERNEL_VERSION}
@@ -46,16 +46,17 @@ if [ ! -e linux-stable/arch/${ARCH}/boot/Image ]; then
     echo building kernal image
     make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE -j4 all # make kernal image
 
-    echo building modules
-    make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE modules
+    echo skipping building modules
+    # make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE modules
 
     echo building device tree
     make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE dtbs
 
+    echo "Adding the Image in outdir"
+    mv arch/${ARCH}/boot/Image ../Image
     echo linux kernel build fin
 fi
 
-echo "Adding the Image in outdir"
 
 echo "Creating the staging directory for the root filesystem"
 cd "$OUTDIR"
@@ -111,8 +112,8 @@ sudo mknod -m 666 dev/null c 1 3
 sudo mknod -m 600 dev/console c 5 1
 
 
-# TODO: Clean and build the writer utility
-cp $OUTDIR/..
+echo Clean and build the writer utility
+cd $OUTDIR/..
 make clean
 make CROSS_COMPILE=$CROSS_COMPILE writer
 
@@ -124,9 +125,14 @@ make CROSS_COMPILE=$CROSS_COMPILE writer
 # libc="$(find $SYSROOT -name libc.so.6)"
 cp writer $ROOTFS/home/writer
 
+echo prepare intitramfs
+cd $OUTDIR
 # TODO: Chown the root directory
+sudo chown root $ROOTFS
 cd $ROOTFS
 find . | cpio -H newc -ov --owner root:root > ${OUTDIR}/initramfs.cpio
 cd ..
 gzip -f initramfs.cpio
+
+
 
