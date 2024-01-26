@@ -5,7 +5,7 @@
 set -e
 set -u
 
-OUTDIR=out #/tmp/aeld
+OUTDIR="$(realpath out)" #/tmp/aeld
 KERNEL_REPO=git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
 KERNEL_VERSION=v5.1.10
 BUSYBOX_VERSION=1_33_1
@@ -105,12 +105,24 @@ libc="$(find $SYSROOT -name libc.so.6)"
 cp $libm $libresolv $libc $ROOTFS/lib64
 
 
-# TODO: Make device nodes
+echo creating null device
+cd $ROOTFS
+sudo mknod -m 666 dev/null c 1 3
+sudo mknod -m 600 dev/console c 5 1
+
 
 # TODO: Clean and build the writer utility
+cp $OUTDIR/..
+make clean
+make CROSS_COMPILE=$CROSS_COMPILE writer
 
-# TODO: Copy the finder related scripts and executables to the /home directory
-# on the target rootfs
+# these commands reveal that the deps of writer.
+# aarch64-none-linux-gnu-readelf -a writer | grep "Shared libr"
+# file writer
+# but these are less then set of deps required by busybox so
+# write_interp="$(find $SYSROOT -name ld-linux-aarch64.so.1)"
+# libc="$(find $SYSROOT -name libc.so.6)"
+cp writer $ROOTFS/home/writer
 
 # TODO: Chown the root directory
 
