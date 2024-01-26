@@ -67,6 +67,7 @@ fi
 echo Create necessary base directories
 mkdir rootfs
 cd rootfs
+ROOTFS=$PWD
 mkdir bin dev etc home lib lib64 proc sbin sys tmp
 mkdir -p usr/bin usr/lib usr/sbin var/log
 
@@ -84,7 +85,9 @@ else
     cd busybox
 fi
 
-# TODO: Make and install busybox
+echo Make and install busybox
+make ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE
+make CONFIG_PREFIX=$ROOTFS ARCH=$ARCH CROSS_COMPILE=$CROSS_COMPILE install
 
 echo "Library dependencies"
 ${CROSS_COMPILE}readelf -a bin/busybox | grep "program interpreter"
