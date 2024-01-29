@@ -113,7 +113,7 @@ sudo mknod -m 600 dev/console c 5 1
 
 
 echo Clean and build the writer utility
-cd $OUTDIR/..
+cd $FINDER_APP_DIR
 make clean
 make CROSS_COMPILE=$CROSS_COMPILE writer
 
