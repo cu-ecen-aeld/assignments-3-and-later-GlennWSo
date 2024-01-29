@@ -28,7 +28,6 @@ echo "Booting the kernel"
 # See trick at https://superuser.com/a/1412150 to route serial port output to file
 qemu-system-aarch64 \
     -M virt \
-    -append "rdinit=/home/autorun-qemu.sh console=ttyAMA0" -initrd ${INITRD_IMAGE}
     -chardev stdio,id=char0,mux=on,logfile=${OUTDIR}/serial.log,signal=off \
     -cpu cortex-a53 \
     -kernel ${KERNEL_IMAGE} \
@@ -36,3 +35,5 @@ qemu-system-aarch64 \
     -nographic \
     -serial chardev:char0 -mon chardev=char0 \
     -smp 1 \
+    -append "rdinit=/home/autorun-qemu.sh console=ttyAMA0" \
+    -initrd ${INITRD_IMAGE} 
