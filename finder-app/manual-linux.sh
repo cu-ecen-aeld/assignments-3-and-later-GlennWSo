@@ -123,7 +123,12 @@ make CROSS_COMPILE=$CROSS_COMPILE writer
 # but these are less then set of deps required by busybox so
 # write_interp="$(find $SYSROOT -name ld-linux-aarch64.so.1)"
 # libc="$(find $SYSROOT -name libc.so.6)"
-cp writer $ROOTFS/bin
+
+# ii. Y~our writer application from Assignment 2 should be cross compiled and placed in the outdir/rootfs/home directory for execution on target. 
+cp writer $ROOTFS/home
+# f. Copy your finder.sh, conf/username.txt, conf/assignment.txt and finder-test.sh scripts from Assignment 2 into the outdir/rootfs/home directory.
+
+
 
 echo prepare intitramfs
 cd $OUTDIR
