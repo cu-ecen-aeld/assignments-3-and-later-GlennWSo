@@ -123,7 +123,7 @@ make CROSS_COMPILE=$CROSS_COMPILE writer
 # but these are less then set of deps required by busybox so
 # write_interp="$(find $SYSROOT -name ld-linux-aarch64.so.1)"
 # libc="$(find $SYSROOT -name libc.so.6)"
-cp writer $ROOTFS/home/writer
+cp writer $ROOTFS/bin
 
 echo prepare intitramfs
 cd $OUTDIR
