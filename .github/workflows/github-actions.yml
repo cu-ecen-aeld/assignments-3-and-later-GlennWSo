@@ -16,7 +16,6 @@ jobs:
           - name: Run unit test
             run: ./unit-test.sh
                 
-    disabled full-test becouse i run out of storage space on my vm :(
     full-test:
         container: cuaesd/aesd-autotest:assignment3
         runs-on: self-hosted
