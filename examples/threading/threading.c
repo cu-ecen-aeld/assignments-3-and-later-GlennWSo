@@ -23,6 +23,7 @@ void* threadfunc(void* thread_param)
 
 
     DEBUG_LOG("started sleeping before lock: %d", data -> wait_obtain);
+    DEBUG_LOG("data.wait_release: %d", data -> wait_release);
     int sleep = data->wait_obtain;
     DEBUG_LOG("sleep: %d", sleep);
     usleep(data->wait_obtain); 
@@ -64,15 +65,14 @@ bool start_thread_obtaining_mutex(pthread_t *thread, pthread_mutex_t *mutex,int 
     };
     
 
-    struct thread_data data = {
-        .mutex =  mutex,
-        .wait_obtain = wait_to_obtain_ms * 1000,
-        .wait_release = wait_to_release_ms * 1000,
-        .thread_complete_success =  false,
-    };
-    DEBUG_LOG("data created with obtaion wait_ms: %d", wait_to_obtain_ms);
-    DEBUG_LOG("data created with obtaion wait_us: %d", data.wait_obtain);
-    int res =pthread_create(thread, NULL, &threadfunc, &data);
+    struct thread_data *data_ptr = malloc(sizeof(struct thread_data));
+    // struct thread_data data = *data_ptr;
+    data_ptr -> mutex =  mutex;
+    data_ptr -> wait_obtain = wait_to_obtain_ms * 1000;
+    data_ptr -> wait_release = wait_to_release_ms * 1000;
+    data_ptr -> thread_complete_success =  false;
+
+    int res =pthread_create(thread, NULL, &threadfunc, data_ptr);
     if (res!=0) {
         ERROR_LOG("thread creation failed");
         return false;
