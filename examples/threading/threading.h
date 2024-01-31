@@ -16,9 +16,9 @@ struct thread_data{
      */
     /// mutually exclusive lock;
     pthread_mutex_t mutex;
-    /// millis wait time before obtain mutex
+    /// usec wait time before obtain mutex
     int wait_obtain ;
-    /// millis wait time before release mutex
+    /// usec wait time before release mutex
     int wait_release;
 
     /**
