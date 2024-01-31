@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 // Optional: use these functions to add debug or error prints to your application
-#define DEBUG_LOG(msg,...)
-//#define DEBUG_LOG(msg,...) printf("threading: " msg "\n" , ##__VA_ARGS__)
+// #define DEBUG_LOG(msg,...)
+#define DEBUG_LOG(msg,...) printf("threading: " msg "\n" , ##__VA_ARGS__)
 #define ERROR_LOG(msg,...) printf("threading ERROR: " msg "\n" , ##__VA_ARGS__)
 
 void* threadfunc(void* thread_param)
@@ -21,15 +21,19 @@ void* threadfunc(void* thread_param)
     data -> thread_complete_success = false; 
     bool failed = false;
 
+
+    DEBUG_LOG("started sleeping before lock: %d", data -> wait_obtain);
+    int sleep = data->wait_obtain;
+    DEBUG_LOG("sleep: %d", sleep);
     usleep(data->wait_obtain); 
-    failed = pthread_mutex_lock(&data->mutex) != 0; 
+    failed = pthread_mutex_lock(data->mutex) != 0; 
     if (failed ) {
         ERROR_LOG("lock failed");
         return thread_param;
     };
 
     usleep(data->wait_release); 
-    failed = pthread_mutex_unlock(&data->mutex) != 0;
+    failed = pthread_mutex_unlock(data->mutex) != 0;
     if (failed ) {
         ERROR_LOG("unlock failed");
         return thread_param;
@@ -53,19 +57,27 @@ bool start_thread_obtaining_mutex(pthread_t *thread, pthread_mutex_t *mutex,int 
      */
 
     
-    pthread_mutex_t lock;
-    pthread_mutex_init(&lock, NULL );
+    // pthread_mutex_t lock;
+    if (pthread_mutex_init(mutex, NULL) == -1) {
+        ERROR_LOG("init mutex failed");
+        return false;   
+    };
+    
 
     struct thread_data data = {
-        .mutex =  lock,
+        .mutex =  mutex,
         .wait_obtain = wait_to_obtain_ms * 1000,
         .wait_release = wait_to_release_ms * 1000,
         .thread_complete_success =  false,
     };
+    DEBUG_LOG("data created with obtaion wait_ms: %d", wait_to_obtain_ms);
+    DEBUG_LOG("data created with obtaion wait_us: %d", data.wait_obtain);
     int res =pthread_create(thread, NULL, &threadfunc, &data);
-    if (res==0) {
-        return true;
+    if (res!=0) {
+        ERROR_LOG("thread creation failed");
+        return false;
     }
-    return false;
+    DEBUG_LOG("tread created with id: %lu", *thread);
+    return true;
 }
 
