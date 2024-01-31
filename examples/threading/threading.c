@@ -40,15 +40,21 @@ bool start_thread_obtaining_mutex(pthread_t *thread, pthread_mutex_t *mutex,int 
      *
      * See implementation details in threading.h file comment block
      */
+
+    
     pthread_mutex_t lock;
     pthread_mutex_init(&lock, NULL );
 
     struct thread_data data = {
         .mutex =  lock,
-        .thread_complete_success =  false,
         .wait_obtain = wait_to_obtain_ms,
         .wait_release = wait_to_release_ms,
+        .thread_complete_success =  false,
     };
+    int res =pthread_create(thread, NULL, &threadfunc, &data);
+    if (res==0) {
+        return true;
+    }
     return false;
 }
 
