@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <pthread.h>
+#include <threads.h>
 
 /**
  * This structure should be dynamically allocated and passed as
@@ -15,7 +16,7 @@ struct thread_data{
      * your thread implementation.
      */
     /// mutually exclusive lock;
-    pthread_mutex_t mutex;
+    pthread_mutex_t *mutex;
     /// usec wait time before obtain mutex
     int wait_obtain ;
     /// usec wait time before release mutex
