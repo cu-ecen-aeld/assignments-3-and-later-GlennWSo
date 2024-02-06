@@ -12,9 +12,10 @@ WRITEDIR=/tmp/aeld-data
 
 
 BASE_DIR=$(realpath $(dirname $0))
+BIN_DIR=$BASE_DIR
 
 echo $BASE_DIR
-if [ ! $BASE_DIR=="finder-app" ]; then
+if [ $BASE_DIR != "finder-app" ]; then
 	echo not called from finder-app, looking for conf in /etc/finder-app
 	cd /etc/finder-app
 	CALL_DIR=$PWD
@@ -69,10 +70,10 @@ fi
 
 for i in $( seq 1 $NUMFILES)
 do
-	./writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
+	$BIN_DIR/writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
 
-OUTPUTSTRING=$(./finder.sh "$WRITEDIR" "$WRITESTR")
+OUTPUTSTRING=$($BIN_DIR/finder.sh "$WRITEDIR" "$WRITESTR")
 
 # remove temporary directories
 rm -rf /tmp/aeld-data
