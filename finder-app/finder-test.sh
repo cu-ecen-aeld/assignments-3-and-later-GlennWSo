@@ -8,7 +8,9 @@ set -u
 NUMFILES=10
 WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
+CALL_DIR=$PWD
 username=$(cat conf/username.txt)
+
 
 BASE_DIR=$(dirname $0)
 cd $BASE_DIR
@@ -35,7 +37,7 @@ echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 rm -rf "${WRITEDIR}"
 
 # create $WRITEDIR if not assignment1
-assignment=`cat conf/assignment.txt`
+assignment=$(cat ${CALL_DIR}/conf/assignment.txt)
 
 if [ $assignment != 'assignment1' ]
 then
