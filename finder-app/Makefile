@@ -4,7 +4,7 @@ all: writer
 	echo all done
 
 writer: writer.c 
-	$(CC) $(INCLUDES) $(OBJS) -o writer $(LDFLAGS) 
+	$(CC)  writer.c -o writer 
 
 clean:
 	rm writer
