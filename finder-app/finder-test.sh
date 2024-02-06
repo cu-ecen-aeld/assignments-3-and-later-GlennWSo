@@ -8,11 +8,20 @@ set -u
 NUMFILES=10
 WRITESTR=AELD_IS_FUN
 WRITEDIR=/tmp/aeld-data
-CALL_DIR=$PWD
+
+
+
+BASE_DIR=$(realpath $(dirname $0))
+
+echo $BASE_DIR
+if [ ! $BASE_DIR=="finder-app" ]; then
+	echo not called from finder-app, looking for conf in /etc/finder-app
+	cd /etc/finder-app
+	CALL_DIR=$PWD
+fi
 username=$(cat conf/username.txt)
 
 
-BASE_DIR=$(dirname $0)
 cd $BASE_DIR
 
 if [ $# -lt 3 ]
@@ -37,7 +46,7 @@ echo "Writing ${NUMFILES} files containing string ${WRITESTR} to ${WRITEDIR}"
 rm -rf "${WRITEDIR}"
 
 # create $WRITEDIR if not assignment1
-assignment=$(cat ${CALL_DIR}/conf/assignment.txt)
+assignment=$(cat ${BASE_DIR}/conf/assignment.txt)
 
 if [ $assignment != 'assignment1' ]
 then
