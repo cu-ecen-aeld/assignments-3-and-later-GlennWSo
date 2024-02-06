@@ -15,15 +15,14 @@ BASE_DIR=$(realpath $(dirname $0))
 BIN_DIR=$BASE_DIR
 
 echo $BASE_DIR
-if [ $BASE_DIR != "finder-app" ]; then
-	echo not called from finder-app, looking for conf in /etc/finder-app
-	cd /etc/finder-app
-	CALL_DIR=$PWD
+if [ $(basename $BASE_DIR) != "finder-app" ]; then
+        echo not called from finder-app, looking for conf in /etc/finder-app
+        # cd /etc/finder-app
+        BASE_DIR=/etc/finder-app
 fi
-username=$(cat conf/username.txt)
-
 
 cd $BASE_DIR
+username=$(cat conf/username.txt)
 
 if [ $# -lt 3 ]
 then
