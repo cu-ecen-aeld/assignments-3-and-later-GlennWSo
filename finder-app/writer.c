@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "path argument was: %s", writepath);
 
    };
-   fprintf(fd, "%s", writestr);
+   fprintf(fd, "%s\n", writestr);
    fclose(fd);
    return 0;
 }
