@@ -8,9 +8,7 @@ int main(int argc, char *argv[]) {
    
    openlog(NULL, 0, LOG_USER);
    syslog(LOG_INFO, "arg count is: %i\n", argc);
-   printf("arg count is: %i\n", argc);
    for (int i=1; i < argc; i++) {
-      printf("arg%i: %s\n", i, argv[i]);
       syslog(LOG_INFO, "arg%i: %s\n", i, argv[i]);
     }
 
@@ -25,11 +23,10 @@ int main(int argc, char *argv[]) {
    
    FILE *fd;
    fd = fopen(writepath, "w");
-   printf("hello");
    if ( !fd ) {
-      perror("could not open or create new file");
-      syslog(LOG_PERROR,  "could not open or create new file: %s", strerror(errno));
-      fprintf(stderr, "path argument was: %s", writepath);
+      perror("could not open or create new file\n");
+      syslog(LOG_PERROR,  "could not open or create new file: %s\n", strerror(errno));
+      fprintf(stderr, "path argument was: %s\n", writepath);
 
    };
    fprintf(fd, "%s\n", writestr);
