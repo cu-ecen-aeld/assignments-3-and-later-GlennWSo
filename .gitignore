@@ -10,3 +10,4 @@ test.sh.log
 tmp/
 log_target.txt
 finder-app/out
+aesdsocket
