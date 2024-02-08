@@ -1,10 +1,12 @@
 #include "sys/syslog.h"
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netdb.h>
+#include <unistd.h>
 
 
 int main(){
@@ -62,13 +64,23 @@ int main(){
 	// struct sockaddr_storage client_addr;
 	struct sockaddr client_addr;
 	socklen_t addr_size = sizeof(client_addr);
-	int accfc = accept(sockfd, &client_addr, &addr_size);
-	if (res == -1 ) {
+	int clientfd = accept(sockfd, &client_addr, &addr_size);
+	if (clientfd == -1 ) {
 		perror("acc failed");
 		exit(1);
 	}
-  syslog(LOG_INFO, "Accepted connection from %s\n", ((struct sockaddr *)&client_addr)->sa_data);
+  syslog(LOG_INFO, "Accepted connection from %s\n", client_addr.sa_data);
 
+	char buffer[1000] = "";
+	read(clientfd, &buffer, 1000);
+	char *writepath ="/var/tmp/aesdsocketdata";
+	FILE *fd = fopen(writepath, "w");
+	if ( !fd ) {
+		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
+		exit(1);
+	};
+ fprintf(fd, "%s\n", buffer);
+ fclose(fd);
 
 	freeaddrinfo(servinfo);
 }
