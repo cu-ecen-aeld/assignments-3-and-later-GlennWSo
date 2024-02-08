@@ -59,14 +59,15 @@ int main(){
 
    syslog(LOG_INFO, "listen ok\n");
 
-	struct sockaddr_storage client_addr;
+	// struct sockaddr_storage client_addr;
+	struct sockaddr client_addr;
 	socklen_t addr_size = sizeof(client_addr);
-	int accfc = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size);
+	int accfc = accept(sockfd, &client_addr, &addr_size);
 	if (res == -1 ) {
 		perror("acc failed");
 		exit(1);
 	}
-   syslog(LOG_INFO, "acc ok\n");
+  syslog(LOG_INFO, "Accepted connection from %s\n", ((struct sockaddr *)&client_addr)->sa_data);
 
 
 	freeaddrinfo(servinfo);
