@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 	char read_buffer[100] = "";
   unsigned long read_chunk = sizeof(read_buffer) - 1;
   char *writepath ="/var/tmp/aesdsocketdata";
-	FILE *fd =fopen(writepath, "w");
+	FILE *fd =fopen(writepath, "a");
 	if ( !fd ) {
 		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
 		exit(1);
@@ -115,7 +115,6 @@ int main(int argc, char *argv[]) {
 	syslog(LOG_INFO, "read_count: %i", read_count);
 	fprintf(fd, "\n");
 	fclose(fd);
-	close(clientfd);
-
+  // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
 	freeaddrinfo(servinfo);
 }
