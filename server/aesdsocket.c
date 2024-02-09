@@ -50,12 +50,11 @@ int main(int argc, char *argv[]) {
 
 	int sockfd = socket(
 		servinfo->ai_family,
-		// AF_LOCAL,
 		servinfo->ai_socktype,
 		servinfo->ai_protocol
 	);
 	if (sockfd == -1 ) {
-		perror("socket failed");
+		syslog(LOG_ERR, "socket failed: %s", strerror(errno));
 		exit(1);
 	}
    syslog(LOG_INFO, "sock ok\n");
@@ -63,14 +62,14 @@ int main(int argc, char *argv[]) {
 
 	res = bind(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
 	if (res != 0 ) {
-		perror("bind failed");
+		syslog(LOG_ERR, "bind failed: %s", strerror(errno));
 		exit(1);
 	}
    syslog(LOG_INFO, "bind ok\n");
 
 	res = listen(sockfd, 10);
 	if (res != 0 ) {
-		perror("listen failed");
+		syslog(LOG_ERR, "listen failed: %s", strerror(errno));
 		exit(1);
 	}
 
@@ -81,7 +80,7 @@ int main(int argc, char *argv[]) {
 	socklen_t addr_size = sizeof(client_addr);
 	int clientfd = accept(sockfd, &client_addr, &addr_size);
 	if (clientfd == -1 ) {
-		perror("acc failed");
+		syslog(LOG_ERR, "accept failed: %s", strerror(errno));
 		exit(1);
 	}
 
@@ -93,16 +92,30 @@ int main(int argc, char *argv[]) {
 	inet_ntop( AF_INET, &ipAddr, addr_str, INET6_ADDRSTRLEN );
   syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
 
-	char read_buffer[1000] = "";
-	read(clientfd, &read_buffer, 1000);
-	char *writepath ="/var/tmp/aesdsocketdata";
-	FILE *fd = fopen(writepath, "a");
+	char read_buffer[6] = "";
+  unsigned long read_chunk = sizeof(read_buffer) - 1;
+  char *writepath ="/var/tmp/aesdsocketdata";
+	FILE *fd =fopen(writepath, "w");
 	if ( !fd ) {
 		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
 		exit(1);
 	};
- fprintf(fd, "%s\n", read_buffer);
- fclose(fd);
+
+	int read_count = 0;
+	while (read_count = read(clientfd, &read_buffer, read_chunk), read_count) {
+		syslog(LOG_INFO, "read_count: %i", read_count);
+		if (read_count < 0) {
+		syslog(LOG_ERR, "read failed: %s", strerror(errno));
+			exit(1);
+		}
+		syslog(LOG_INFO, "read: %s", read_buffer);
+		read_buffer[read_count] = 0;
+		fprintf(fd, "%s", read_buffer);
+	}
+	syslog(LOG_INFO, "read_count: %i", read_count);
+	fprintf(fd, "\n");
+	fclose(fd);
+	close(clientfd);
 
 	freeaddrinfo(servinfo);
 }
