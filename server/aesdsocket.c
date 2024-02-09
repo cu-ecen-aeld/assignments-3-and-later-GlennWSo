@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "sys/syslog.h"
 #include <errno.h>
 #include <stdio.h>
@@ -10,12 +11,13 @@
 #include <arpa/inet.h>
 
 
-int main(){
+int main(int argc, char *argv[]) {
 	// int domain, type, protocol;
 	// domain = AF_LOCAL;
 	// type = SOCK_STREAM;
 	// int protocol = 0; // IP
-   openlog(NULL, 0, LOG_USER);
+	openlog(NULL, 0, LOG_USER);
+	openlog(NULL, 0, LOG_USER);
 
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof hints);
@@ -33,6 +35,18 @@ int main(){
 		exit(1);
 	}
 	printf("get addres ok\n");
+	syslog(LOG_INFO, "arg count is: %i\n", argc);
+	for (int i=1; i < argc; i++) {
+		char *arg = argv[i];
+		syslog(LOG_INFO, "arg%i: %s\n", i, arg);
+		if ( 0==strcmp(arg, "-d") ) {
+			printf("becoming daemon\n");
+			if (daemon(0,0)){
+				perror("daemon");
+			};
+		}
+
+	}
 
 	int sockfd = socket(
 		servinfo->ai_family,
