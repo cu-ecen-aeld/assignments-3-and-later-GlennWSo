@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 	inet_ntop( AF_INET, &ipAddr, addr_str, INET6_ADDRSTRLEN );
   syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
 
-	char read_buffer[6] = "";
+	char read_buffer[100] = "";
   unsigned long read_chunk = sizeof(read_buffer) - 1;
   char *writepath ="/var/tmp/aesdsocketdata";
 	FILE *fd =fopen(writepath, "w");
