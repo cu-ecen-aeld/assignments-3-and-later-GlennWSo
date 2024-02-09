@@ -24,7 +24,7 @@ int main(){
 	// hints.ai_protocol = 0;
 	
 	struct addrinfo *servinfo;
-  char port[5] = "1234";
+  char port[5] = "9000";
   int res = getaddrinfo(NULL, port, &hints, &servinfo);
 	if (res != 0 ) {
 		// perror("getaddrinfo failed");
@@ -71,15 +71,15 @@ int main(){
 	}
   syslog(LOG_INFO, "Accepted connection from %s\n", client_addr.sa_data);
 
-	char buffer[1000] = "";
-	read(clientfd, &buffer, 1000);
+	char read_buffer[1000] = "";
+	read(clientfd, &read_buffer, 1000);
 	char *writepath ="/var/tmp/aesdsocketdata";
-	FILE *fd = fopen(writepath, "w");
+	FILE *fd = fopen(writepath, "a");
 	if ( !fd ) {
 		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
 		exit(1);
 	};
- fprintf(fd, "%s\n", buffer);
+ fprintf(fd, "%s\n", read_buffer);
  fclose(fd);
 
 	freeaddrinfo(servinfo);
