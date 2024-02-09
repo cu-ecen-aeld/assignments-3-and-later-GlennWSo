@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 
 int main(){
@@ -69,7 +70,14 @@ int main(){
 		perror("acc failed");
 		exit(1);
 	}
-  syslog(LOG_INFO, "Accepted connection from %s\n", client_addr.sa_data);
+
+	//ref https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
+	// so instead of branching lets just work wth size for v6, the larger format
+	struct sockaddr_in* pV6Addr = (struct sockaddr_in*)&client_addr;
+	struct in_addr ipAddr = pV6Addr->sin_addr;
+	char addr_str[INET6_ADDRSTRLEN]= "";
+	inet_ntop( AF_INET, &ipAddr, addr_str, INET6_ADDRSTRLEN );
+  syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
 
 	char read_buffer[1000] = "";
 	read(clientfd, &read_buffer, 1000);
