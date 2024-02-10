@@ -115,6 +115,28 @@ int main(int argc, char *argv[]) {
 	syslog(LOG_INFO, "read_count: %i", read_count);
 	fprintf(fd, "\n");
 	fclose(fd);
+
   // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
+	fd = fopen(writepath, "r");
+	if (fd == NULL) {
+		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
+	}
+	
+	while (read_count = fread(&read_buffer, read_chunk, 1, fd), read_count) {
+		syslog(LOG_INFO, " file read_count: %i", read_count);
+		if (read_count == 0) {
+			if (feof(fd)) {
+				syslog(LOG_INFO, "file EOF reached");
+				break;
+			}
+			syslog(LOG_ERR, "file read failed: %s", strerror(errno));
+			exit(1);
+		}
+		read_buffer[read_count] = 0;
+		syslog(LOG_INFO, "read: %s", read_buffer);
+		printf("read: %s", read_buffer);
+		write(clientfd, read_buffer, read_count);
+	}
+
 	freeaddrinfo(servinfo);
 }
