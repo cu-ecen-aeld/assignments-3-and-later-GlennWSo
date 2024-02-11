@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
 	// hints.ai_protocol = 0;
 	
 	struct addrinfo *servinfo;
-  char port[5] = "9000";
+  char port[100] = "9000";
   int res = getaddrinfo(NULL, port, &hints, &servinfo);
 	if (res != 0 ) {
 		// perror("getaddrinfo failed");
@@ -57,7 +57,10 @@ int main(int argc, char *argv[]) {
 		syslog(LOG_ERR, "socket failed: %s", strerror(errno));
 		exit(1);
 	}
-   syslog(LOG_INFO, "sock ok\n");
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0){
+		syslog(LOG_ERR,"setsockopt(SO_REUSEADDR) failed: %s", strerror(errno));
+	}
+	syslog(LOG_INFO, "sock ok\n");
 
 
 	res = bind(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
@@ -89,54 +92,70 @@ int main(int argc, char *argv[]) {
 	struct sockaddr_in* pV6Addr = (struct sockaddr_in*)&client_addr;
 	struct in_addr ipAddr = pV6Addr->sin_addr;
 	char addr_str[INET6_ADDRSTRLEN]= "";
-	inet_ntop( AF_INET, &ipAddr, addr_str, INET6_ADDRSTRLEN );
+	inet_ntop(AF_INET, &ipAddr, addr_str, INET6_ADDRSTRLEN );
   syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
 
-	char read_buffer[100] = "";
-  unsigned long read_chunk = sizeof(read_buffer) - 1;
   char *writepath ="/var/tmp/aesdsocketdata";
-	FILE *fd =fopen(writepath, "a");
-	if ( !fd ) {
+
+	char read_buffer[100] = "";
+  unsigned long buffer_size = sizeof(read_buffer);
+	FILE *dump_fd =fopen(writepath, "w");
+	if ( !dump_fd ) {
 		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
 		exit(1);
 	};
 
-	int read_count = 0;
-	while (read_count = read(clientfd, &read_buffer, read_chunk), read_count) {
-		syslog(LOG_INFO, "read_count: %i", read_count);
-		if (read_count < 0) {
-		syslog(LOG_ERR, "read failed: %s", strerror(errno));
-			exit(1);
+	// write(clientfd, "hello", 6);
+	// exit(0);
+	int gets_res;
+	FILE *client_file = fdopen(clientfd, "r");
+	while (1) {
+		gets_res = fgetc(client_file);
+
+		syslog(LOG_DEBUG, "last res: %i", gets_res);
+		if (gets_res == EOF){
+			if (ferror(client_file)){
+				syslog(LOG_ERR, "fgetc: %s", strerror(errno));
+				exit(1);
+			}
+			syslog(LOG_DEBUG, "Read EOF from socket");
+			break;
 		}
-		syslog(LOG_INFO, "read: %s", read_buffer);
-		read_buffer[read_count] = 0;
-		fprintf(fd, "%s", read_buffer);
+		syslog(LOG_DEBUG, "last char: %c", gets_res);
+		fputc(gets_res, dump_fd);
+		if (gets_res == '\n'){
+			break;
+		}
 	}
-	syslog(LOG_INFO, "read_count: %i", read_count);
-	fprintf(fd, "\n");
-	fclose(fd);
+	fclose(dump_fd);
 
   // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
-	fd = fopen(writepath, "r");
-	if (fd == NULL) {
+	dump_fd = fopen(writepath, "r");
+	if (dump_fd == NULL) {
 		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
 	}
-	
-	while (read_count = fread(&read_buffer, read_chunk, 1, fd), read_count) {
-		syslog(LOG_INFO, " file read_count: %i", read_count);
-		if (read_count == 0) {
-			if (feof(fd)) {
-				syslog(LOG_INFO, "file EOF reached");
-				break;
-			}
+
+	char *read_res;
+	while (1) {
+		read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
+		syslog(LOG_INFO, " file read_res: %s", read_res);
+		if (ferror(dump_fd)) {
 			syslog(LOG_ERR, "file read failed: %s", strerror(errno));
 			exit(1);
 		}
-		read_buffer[read_count] = 0;
 		syslog(LOG_INFO, "read: %s", read_buffer);
-		printf("read: %s", read_buffer);
-		write(clientfd, read_buffer, read_count);
+		// printf("read: %s", read_buffer);
+		write(clientfd, read_buffer, buffer_size-1);
+		if (feof(dump_fd)) {
+			syslog(LOG_INFO, "file EOF reached");
+			break;
+		}
 	}
 
+	fclose(client_file);
+	fclose(dump_fd);
+	close(clientfd);
+	close(sockfd);
 	freeaddrinfo(servinfo);
+
 }
