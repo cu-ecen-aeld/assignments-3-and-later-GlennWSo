@@ -10,6 +10,26 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+void send_dump(FILE *dump_fd, int clientfd){	
+	char read_buffer[100] = "";
+  unsigned long buffer_size = sizeof(read_buffer);
+	char *read_res;
+	while (1) {
+		read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
+		syslog(LOG_INFO, " file read_res: %s", read_res);
+		if (ferror(dump_fd)) {
+			syslog(LOG_ERR, "file read failed: %s", strerror(errno));
+			exit(1);
+		}
+		syslog(LOG_INFO, "read: %s", read_buffer);
+		// printf("read: %s", read_buffer);
+		write(clientfd, read_buffer, buffer_size-1);
+		if (feof(dump_fd)) {
+			syslog(LOG_INFO, "file EOF reached");
+			break;
+		}
+	}
+}
 
 void dump_socket(FILE *dump_fd, int clientfd){	
 
@@ -137,28 +157,10 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	char read_buffer[100] = "";
-  unsigned long buffer_size = sizeof(read_buffer);
-	char *read_res;
-	while (1) {
-		read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
-		syslog(LOG_INFO, " file read_res: %s", read_res);
-		if (ferror(dump_fd)) {
-			syslog(LOG_ERR, "file read failed: %s", strerror(errno));
-			exit(1);
-		}
-		syslog(LOG_INFO, "read: %s", read_buffer);
-		// printf("read: %s", read_buffer);
-		write(clientfd, read_buffer, buffer_size-1);
-		if (feof(dump_fd)) {
-			syslog(LOG_INFO, "file EOF reached");
-			break;
-		}
-	}
+	send_dump(dump_fd, clientfd);
 
 	fclose(dump_fd);
 	close(clientfd);
 	close(sockfd);
 	freeaddrinfo(servinfo);
-
 }
