@@ -11,6 +11,31 @@
 #include <arpa/inet.h>
 
 
+void dump_socket(FILE *dump_fd, int clientfd){	
+
+	int gets_res;
+	FILE *client_file = fdopen(clientfd, "r");
+	while (1) {
+		gets_res = fgetc(client_file);
+
+		syslog(LOG_DEBUG, "last res: %i", gets_res);
+		if (gets_res == EOF){
+			if (ferror(client_file)){
+				syslog(LOG_ERR, "fgetc: %s", strerror(errno));
+				exit(1);
+			}
+			syslog(LOG_DEBUG, "Read EOF from socket");
+			break;
+		}
+		syslog(LOG_DEBUG, "last char: %c", gets_res);
+		fputc(gets_res, dump_fd);
+		if (gets_res == '\n'){
+			break;
+		}
+	}
+	fclose(client_file);
+}
+
 int main(int argc, char *argv[]) {
 	// int domain, type, protocol;
 	// domain = AF_LOCAL;
@@ -96,45 +121,24 @@ int main(int argc, char *argv[]) {
   syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
 
   char *writepath ="/var/tmp/aesdsocketdata";
-
-	char read_buffer[100] = "";
-  unsigned long buffer_size = sizeof(read_buffer);
 	FILE *dump_fd =fopen(writepath, "w");
 	if ( !dump_fd ) {
 		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
 		exit(1);
 	};
-
-	// write(clientfd, "hello", 6);
-	// exit(0);
-	int gets_res;
-	FILE *client_file = fdopen(clientfd, "r");
-	while (1) {
-		gets_res = fgetc(client_file);
-
-		syslog(LOG_DEBUG, "last res: %i", gets_res);
-		if (gets_res == EOF){
-			if (ferror(client_file)){
-				syslog(LOG_ERR, "fgetc: %s", strerror(errno));
-				exit(1);
-			}
-			syslog(LOG_DEBUG, "Read EOF from socket");
-			break;
-		}
-		syslog(LOG_DEBUG, "last char: %c", gets_res);
-		fputc(gets_res, dump_fd);
-		if (gets_res == '\n'){
-			break;
-		}
-	}
+	dump_socket(dump_fd, clientfd);
 	fclose(dump_fd);
+
 
   // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
 	dump_fd = fopen(writepath, "r");
 	if (dump_fd == NULL) {
 		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
+		exit(1);
 	}
 
+	char read_buffer[100] = "";
+  unsigned long buffer_size = sizeof(read_buffer);
 	char *read_res;
 	while (1) {
 		read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
@@ -152,7 +156,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	fclose(client_file);
 	fclose(dump_fd);
 	close(clientfd);
 	close(sockfd);
