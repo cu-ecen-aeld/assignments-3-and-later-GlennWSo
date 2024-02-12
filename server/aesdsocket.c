@@ -107,13 +107,12 @@ int main(int argc, char *argv[]) {
 	}
 	syslog(LOG_INFO, "sock ok\n");
 
-
 	res = bind(sockfd, servinfo->ai_addr, servinfo->ai_addrlen);
 	if (res != 0 ) {
 		syslog(LOG_ERR, "bind failed: %s", strerror(errno));
 		exit(1);
 	}
-   syslog(LOG_INFO, "bind ok\n");
+	syslog(LOG_INFO, "bind ok\n");
 
 	res = listen(sockfd, 10);
 	if (res != 0 ) {
@@ -123,44 +122,48 @@ int main(int argc, char *argv[]) {
 
    syslog(LOG_INFO, "listen ok\n");
 
-	// struct sockaddr_storage client_addr;
-	struct sockaddr client_addr;
-	socklen_t addr_size = sizeof(client_addr);
-	int clientfd = accept(sockfd, &client_addr, &addr_size);
-	if (clientfd == -1 ) {
-		syslog(LOG_ERR, "accept failed: %s", strerror(errno));
-		exit(1);
+
+	while(1) {
+
+		// struct sockaddr_storage client_addr;
+		struct sockaddr client_addr;
+		socklen_t addr_size = sizeof(client_addr);
+		int clientfd = accept(sockfd, &client_addr, &addr_size);
+		if (clientfd == -1 ) {
+			syslog(LOG_ERR, "accept failed: %s", strerror(errno));
+			exit(1);
+		}
+
+		//ref https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
+		// so instead of branching lets just work wth size for v6, the larger format
+		struct sockaddr_in* pV6Addr = (struct sockaddr_in*)&client_addr;
+		struct in_addr ipAddr = pV6Addr->sin_addr;
+		char addr_str[INET6_ADDRSTRLEN]= "";
+		inet_ntop(AF_INET, &ipAddr, addr_str, INET6_ADDRSTRLEN );
+	  syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
+
+	  char *writepath ="/var/tmp/aesdsocketdata";
+		FILE *dump_fd =fopen(writepath, "w");
+		if ( !dump_fd ) {
+			syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
+			exit(1);
+		};
+		dump_socket(dump_fd, clientfd);
+		fclose(dump_fd);
+
+
+	  // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
+		dump_fd = fopen(writepath, "r");
+		if (dump_fd == NULL) {
+			syslog(LOG_ERR, "fopen error:%s", strerror(errno));
+			exit(1);
+		}
+
+		send_dump(dump_fd, clientfd);
+
+		fclose(dump_fd);
+		close(clientfd);
 	}
-
-	//ref https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
-	// so instead of branching lets just work wth size for v6, the larger format
-	struct sockaddr_in* pV6Addr = (struct sockaddr_in*)&client_addr;
-	struct in_addr ipAddr = pV6Addr->sin_addr;
-	char addr_str[INET6_ADDRSTRLEN]= "";
-	inet_ntop(AF_INET, &ipAddr, addr_str, INET6_ADDRSTRLEN );
-  syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
-
-  char *writepath ="/var/tmp/aesdsocketdata";
-	FILE *dump_fd =fopen(writepath, "w");
-	if ( !dump_fd ) {
-		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
-		exit(1);
-	};
-	dump_socket(dump_fd, clientfd);
-	fclose(dump_fd);
-
-
-  // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
-	dump_fd = fopen(writepath, "r");
-	if (dump_fd == NULL) {
-		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
-		exit(1);
-	}
-
-	send_dump(dump_fd, clientfd);
-
-	fclose(dump_fd);
-	close(clientfd);
 	close(sockfd);
 	freeaddrinfo(servinfo);
 }
