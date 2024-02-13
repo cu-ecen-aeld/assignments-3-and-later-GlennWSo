@@ -97,8 +97,6 @@ int main(int argc, char *argv[]) {
 
   char *writepath ="/var/tmp/aesdsocketdata";
 
-	char read_buffer[100] = "";
-  unsigned long buffer_size = sizeof(read_buffer);
 	FILE *dump_fd =fopen(writepath, "w");
 	if ( !dump_fd ) {
 		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
@@ -135,8 +133,11 @@ int main(int argc, char *argv[]) {
 		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
 	}
 
+	char read_buffer[100] = "";
+  unsigned long buffer_size = sizeof(read_buffer);
 	char *read_res;
 	while (1) {
+		// TODO use read
 		read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
 		syslog(LOG_INFO, " file read_res: %s", read_res);
 		if (ferror(dump_fd)) {
