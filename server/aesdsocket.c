@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <unistd.h>
 #include "sys/syslog.h"
 #include <errno.h>
@@ -9,6 +10,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <stdbool.h>
 
 int sockfd;
 int acceptfd;
@@ -24,8 +26,17 @@ void cleanup() {
 	freeaddrinfo(servinfo);
 };
 
+static bool TERMINATE = false;
 static void catch_function(int signo) {
-	syslog(LOG_INFO, "caught signal: %d", signo);
+	syslog(LOG_INFO, "Caught signal, exiting: %d", signo);
+	TERMINATE = true;
+}
+
+/// read single char, can be nonblocking via fcntl
+/// 
+/// returns: 1 on char read, 0 on EOF, -1 on err
+ssize_t ngetc(int fd, char *c){
+	return read(fd, c, 1);
 }
 
 int main(int argc, char *argv[]) {
@@ -34,7 +45,10 @@ int main(int argc, char *argv[]) {
 	// type = SOCK_STREAM;
 	// int protocol = 0; // IP
 	openlog(NULL, 0, LOG_USER);
-	openlog(NULL, 0, LOG_USER);
+	if (signal(SIGINT, catch_function) == SIG_ERR) {
+		perror("signal");
+		exit(1);
+	}
 
 
 	struct addrinfo hints;
@@ -123,11 +137,11 @@ int main(int argc, char *argv[]) {
 
 	// write(clientfd, "hello", 6);
 	// exit(0);
-	int gets_res;
 	client_file = fdopen(acceptfd, "r");
+	int gets_res;
+	char c;
 	while (1) {
 		gets_res = fgetc(client_file);
-
 
 		syslog(LOG_DEBUG, "last res: %i", gets_res);
 		if (gets_res == EOF){
@@ -140,9 +154,10 @@ int main(int argc, char *argv[]) {
 		}
 		syslog(LOG_DEBUG, "last char: %c", gets_res);
 		fputc(gets_res, dump_fd);
-		if (gets_res == '\n'){
+		if (gets_res == '\n' || TERMINATE ){
 			break;
 		}
+
 	}
 	fclose(dump_fd);
 
