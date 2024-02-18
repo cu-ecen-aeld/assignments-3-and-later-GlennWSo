@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
 #include "sys/syslog.h"
@@ -17,19 +18,23 @@ int acceptfd;
 FILE *client_file;
 FILE *dump_fd;
 struct addrinfo *servinfo;
+const char WRITEPATH[] ="/var/tmp/aesdsocketdata";
 
-void cleanup() {
+void cleanup(bool purge) {
 	fclose(client_file);
 	fclose(dump_fd);
 	close(acceptfd);
 	close(sockfd);
 	freeaddrinfo(servinfo);
+	remove(WRITEPATH);
 };
 
-static bool TERMINATE = false;
+static bool terminate = false;
+static bool purge = false;
 static void catch_function(int signo) {
 	syslog(LOG_INFO, "Caught signal, exiting: %d", signo);
-	TERMINATE = true;
+	terminate = true;
+	purge = (signo != SIGQUIT);
 }
 
 /// read single char, can be nonblocking via fcntl
@@ -45,7 +50,7 @@ int main(int argc, char *argv[]) {
 	// type = SOCK_STREAM;
 	// int protocol = 0; // IP
 	openlog(NULL, 0, LOG_USER);
-	if (signal(SIGINT, catch_function) == SIG_ERR) {
+	if (signal(SIGINT | SIGTERM | SIGQUIT, catch_function) == SIG_ERR) {
 		perror("signal");
 		exit(1);
 	}
@@ -113,12 +118,31 @@ int main(int argc, char *argv[]) {
 	// struct sockaddr_storage client_addr;
 	struct sockaddr client_addr;
 	socklen_t addr_size = sizeof(client_addr);
-	acceptfd = accept(sockfd, &client_addr, &addr_size);
-	if (acceptfd == -1 ) {
-		syslog(LOG_ERR, "accept failed: %s", strerror(errno));
+
+	int flags = fcntl(sockfd, F_GETFL, 0);
+	res = fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+	if (res==-1) {
+		syslog(LOG_ERR, "fcntl: %s", strerror(errno));
 		exit(1);
 	}
+	while (!terminate) {
+		acceptfd = accept(sockfd, &client_addr, &addr_size);
+		if (acceptfd==-1){
+			if (errno==EWOULDBLOCK) {
+				usleep(20000);
+				continue;
+			}
+			syslog(LOG_ERR, "accept: %s", strerror(errno));
+			exit(1);
+		}
+		syslog(LOG_INFO, "accepted");
+		break;
+	};
+	fcntl(sockfd, F_SETFL, flags);
+	flags = fcntl(acceptfd, F_GETFL, 0);
+	fcntl(acceptfd, F_SETFL, flags & (!O_NONBLOCK));
 
+	
 	//ref https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
 	// so instead of branching lets just work wth size for v6, the larger format
 	struct sockaddr_in* pV6Addr = (struct sockaddr_in*)&client_addr;
@@ -127,11 +151,10 @@ int main(int argc, char *argv[]) {
 	inet_ntop(AF_INET, &ipAddr, addr_str, INET6_ADDRSTRLEN );
   syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
 
-  char *writepath ="/var/tmp/aesdsocketdata";
 
-	dump_fd =fopen(writepath, "w");
+	dump_fd =fopen(WRITEPATH, "w");
 	if ( !dump_fd ) {
-		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
+		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",WRITEPATH, strerror(errno));
 		exit(1);
 	};
 
@@ -140,7 +163,7 @@ int main(int argc, char *argv[]) {
 	client_file = fdopen(acceptfd, "r");
 	int gets_res;
 	char c;
-	while (1) {
+	while (!terminate) {
 		gets_res = fgetc(client_file);
 
 		syslog(LOG_DEBUG, "last res: %i", gets_res);
@@ -154,7 +177,7 @@ int main(int argc, char *argv[]) {
 		}
 		syslog(LOG_DEBUG, "last char: %c", gets_res);
 		fputc(gets_res, dump_fd);
-		if (gets_res == '\n' || TERMINATE ){
+		if (gets_res == '\n' || terminate ){
 			break;
 		}
 
@@ -162,7 +185,7 @@ int main(int argc, char *argv[]) {
 	fclose(dump_fd);
 
   // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
-	dump_fd = fopen(writepath, "r");
+	dump_fd = fopen(WRITEPATH, "r");
 	if (dump_fd == NULL) {
 		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
 	}
@@ -170,7 +193,7 @@ int main(int argc, char *argv[]) {
 	char read_buffer[100] = "";
   unsigned long buffer_size = sizeof(read_buffer);
 	unsigned long read_res;
-	while (1) {
+	while (!terminate) {
 		// read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
 		read_res = fread(read_buffer, 1, buffer_size - 1,  dump_fd);
 		syslog(LOG_INFO, " file read_res: %lu", read_res);
@@ -188,7 +211,7 @@ int main(int argc, char *argv[]) {
 		write(acceptfd, read_buffer, buffer_size-1);
 	}
 
-	cleanup();
+	cleanup(purge);
 
 }
 
