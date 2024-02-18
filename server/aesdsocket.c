@@ -21,6 +21,7 @@ struct addrinfo *servinfo;
 const char WRITEPATH[] ="/var/tmp/aesdsocketdata";
 
 void cleanup(bool purge) {
+	syslog(LOG_DEBUG, "cleaning up");
 	fclose(client_file);
 	fclose(dump_fd);
 	close(acceptfd);
@@ -138,9 +139,9 @@ int main(int argc, char *argv[]) {
 		syslog(LOG_INFO, "accepted");
 		break;
 	};
-	fcntl(sockfd, F_SETFL, flags);
-	flags = fcntl(acceptfd, F_GETFL, 0);
-	fcntl(acceptfd, F_SETFL, flags & (!O_NONBLOCK));
+	// fcntl(sockfd, F_SETFL, flags);
+	// flags = fcntl(acceptfd, F_GETFL, 0);
+	// fcntl(acceptfd, F_SETFL, flags & (!O_NONBLOCK));
 
 	
 	//ref https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
@@ -158,31 +159,32 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	};
 
-	// write(clientfd, "hello", 6);
-	// exit(0);
-	client_file = fdopen(acceptfd, "r");
+	// client_file = fdopen(acceptfd, "r");
 	int gets_res;
 	char c;
 	while (!terminate) {
-		gets_res = fgetc(client_file);
-
+		gets_res = ngetc(acceptfd, &c);
 		syslog(LOG_DEBUG, "last res: %i", gets_res);
-		if (gets_res == EOF){
-			if (ferror(client_file)){
-				syslog(LOG_ERR, "fgetc: %s", strerror(errno));
-				exit(1);
-			}
+		if (gets_res == 0) {
 			syslog(LOG_DEBUG, "Read EOF from socket");
 			break;
 		}
-		syslog(LOG_DEBUG, "last char: %c", gets_res);
-		fputc(gets_res, dump_fd);
-		if (gets_res == '\n' || terminate ){
+		if (gets_res == -1) {
+			if (errno == EAGAIN) {
+				usleep(1000);
+				continue;
+			}
+			syslog(LOG_ERR, "ngetc: %s", strerror(errno));
+			exit(1);
+		}
+		syslog(LOG_DEBUG, "last char: %c", c);
+		fputc(c, dump_fd);
+		if (c == '\n'){
 			break;
 		}
-
 	}
 	fclose(dump_fd);
+	syslog(LOG_DEBUG, "fin listing");
 
   // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
 	dump_fd = fopen(WRITEPATH, "r");
