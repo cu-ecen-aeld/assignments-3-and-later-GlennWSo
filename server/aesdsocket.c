@@ -10,6 +10,23 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
+int sockfd;
+int acceptfd;
+FILE *client_file;
+FILE *dump_fd;
+struct addrinfo *servinfo;
+
+void cleanup() {
+	fclose(client_file);
+	fclose(dump_fd);
+	close(acceptfd);
+	close(sockfd);
+	freeaddrinfo(servinfo);
+};
+
+static void catch_function(int signo) {
+	syslog(LOG_INFO, "caught signal: %d", signo);
+}
 
 int main(int argc, char *argv[]) {
 	// int domain, type, protocol;
@@ -19,6 +36,7 @@ int main(int argc, char *argv[]) {
 	openlog(NULL, 0, LOG_USER);
 	openlog(NULL, 0, LOG_USER);
 
+
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -26,7 +44,7 @@ int main(int argc, char *argv[]) {
 	hints.ai_flags = AI_PASSIVE;
 	// hints.ai_protocol = 0;
 	
-	struct addrinfo *servinfo;
+	
   char port[100] = "9000";
   int res = getaddrinfo(NULL, port, &hints, &servinfo);
 	if (res != 0 ) {
@@ -48,7 +66,7 @@ int main(int argc, char *argv[]) {
 
 	}
 
-	int sockfd = socket(
+	sockfd = socket(
 		servinfo->ai_family,
 		servinfo->ai_socktype,
 		servinfo->ai_protocol
@@ -81,8 +99,8 @@ int main(int argc, char *argv[]) {
 	// struct sockaddr_storage client_addr;
 	struct sockaddr client_addr;
 	socklen_t addr_size = sizeof(client_addr);
-	int clientfd = accept(sockfd, &client_addr, &addr_size);
-	if (clientfd == -1 ) {
+	acceptfd = accept(sockfd, &client_addr, &addr_size);
+	if (acceptfd == -1 ) {
 		syslog(LOG_ERR, "accept failed: %s", strerror(errno));
 		exit(1);
 	}
@@ -97,7 +115,7 @@ int main(int argc, char *argv[]) {
 
   char *writepath ="/var/tmp/aesdsocketdata";
 
-	FILE *dump_fd =fopen(writepath, "w");
+	dump_fd =fopen(writepath, "w");
 	if ( !dump_fd ) {
 		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",writepath, strerror(errno));
 		exit(1);
@@ -106,9 +124,10 @@ int main(int argc, char *argv[]) {
 	// write(clientfd, "hello", 6);
 	// exit(0);
 	int gets_res;
-	FILE *client_file = fdopen(clientfd, "r");
+	client_file = fdopen(acceptfd, "r");
 	while (1) {
 		gets_res = fgetc(client_file);
+
 
 		syslog(LOG_DEBUG, "last res: %i", gets_res);
 		if (gets_res == EOF){
@@ -135,28 +154,27 @@ int main(int argc, char *argv[]) {
 
 	char read_buffer[100] = "";
   unsigned long buffer_size = sizeof(read_buffer);
-	char *read_res;
+	unsigned long read_res;
 	while (1) {
-		// TODO use read
-		read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
-		syslog(LOG_INFO, " file read_res: %s", read_res);
-		if (ferror(dump_fd)) {
-			syslog(LOG_ERR, "file read failed: %s", strerror(errno));
+		// read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
+		read_res = fread(read_buffer, 1, buffer_size - 1,  dump_fd);
+		syslog(LOG_INFO, " file read_res: %lu", read_res);
+		if (read_res == 0) {
+			if (feof(dump_fd)) {
+				syslog(LOG_DEBUG, "eof reached");
+				break;
+			} 
+			syslog(LOG_ERR, "fread: %s", strerror(errno));
 			exit(1);
 		}
-		syslog(LOG_INFO, "read: %s", read_buffer);
+		syslog(LOG_DEBUG, "read: %s", read_buffer);
 		// printf("read: %s", read_buffer);
-		write(clientfd, read_buffer, buffer_size-1);
-		if (feof(dump_fd)) {
-			syslog(LOG_INFO, "file EOF reached");
-			break;
-		}
+		read_buffer[read_res] = 0;
+		write(acceptfd, read_buffer, buffer_size-1);
 	}
 
-	fclose(client_file);
-	fclose(dump_fd);
-	close(clientfd);
-	close(sockfd);
-	freeaddrinfo(servinfo);
+	cleanup();
 
 }
+
+
