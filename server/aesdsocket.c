@@ -22,6 +22,7 @@ const char WRITEPATH[] ="/var/tmp/aesdsocketdata";
 
 static bool terminate = false;
 static bool purge = false;
+static bool once = false;
 void cleanup(bool purge) {
 	syslog(LOG_DEBUG, "cleaning up");
 	close(sockfd);
@@ -30,14 +31,12 @@ void cleanup(bool purge) {
 		remove(WRITEPATH);
 	}
 };
-void drop_client() {
-	syslog(LOG_DEBUG, "dropping client");
-	// fcntl(sockfd, F_SETFL, flags);
+void drop_client(char *addr) {
+	syslog(LOG_INFO, "Closed connection from %s", addr);
 	syslog(LOG_DEBUG, "terminate: %d", terminate);
 	// fclose(client_file);
 	fclose(dump_fd);
 	close(acceptfd);
-	
 }
 
 static void catch_function(int signo) {
@@ -93,6 +92,16 @@ int main(int argc, char *argv[]) {
 			if (daemon(0,0)){
 				perror("daemon");
 			};
+		}
+		if ( 0==strcmp(arg, "--clear") ) {
+			printf("clearing dump file: %s\n", WRITEPATH);
+			if (remove(WRITEPATH)){
+				perror("remove");
+			};
+		}
+		if ( 0==strcmp(arg, "--once") ) {
+			printf("once mode: will exit after first client\n");
+			once = true;
 		}
 
 	}
@@ -166,7 +175,7 @@ int main(int argc, char *argv[]) {
   syslog(LOG_INFO, "Accepted connection from %s \n", addr_str);
 
 
-	dump_fd =fopen(WRITEPATH, "w");
+	dump_fd =fopen(WRITEPATH, "a");
 	if ( !dump_fd ) {
 		syslog(LOG_PERROR, "could not open or create new file: %s\nerror: %s\n",WRITEPATH, strerror(errno));
 		exit(1);
@@ -239,7 +248,8 @@ int main(int argc, char *argv[]) {
 	}
 	syslog(LOG_DEBUG, "writeback fin" );
 
-	drop_client();
+	drop_client(addr_str);
+	break;
 	}
 	cleanup(purge);
 
