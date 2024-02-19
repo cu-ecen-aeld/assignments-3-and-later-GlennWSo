@@ -33,9 +33,12 @@ void cleanup(bool purge) {
 static bool terminate = false;
 static bool purge = false;
 static void catch_function(int signo) {
-	syslog(LOG_INFO, "Caught signal, exiting: %d", signo);
+	syslog(LOG_INFO, "Caught signal, exiting");
+	syslog(LOG_DEBUG, "signo: %d", signo);
 	terminate = true;
-	purge = (signo != SIGQUIT);
+	if (signo != SIGQUIT) {
+		purge = true;
+	}
 }
 
 /// read single char, can be nonblocking via fcntl
