@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
 			syslog(LOG_ERR, "ngetc: %s", strerror(errno));
 			exit(1);
 		}
-		syslog(LOG_DEBUG, "last char: %c", c);
+		// syslog(LOG_DEBUG, "last char: %c", c);
 		fputc(c, dump_fd);
 		if (c == '\n'){
 			break;
@@ -233,18 +233,19 @@ int main(int argc, char *argv[]) {
 			syslog(LOG_ERR, "fread: %s", strerror(errno));
 			exit(1);
 		}
-		syslog(LOG_DEBUG, "read: %s", read_buffer);
+		// syslog(LOG_DEBUG, "read: %s", read_buffer);
 		// printf("read: %s", read_buffer);
 		read_buffer[read_res] = 0;
 		// res = 0;
 		int cum = 0;
 		while (!terminate && (read_res > cum)) {
 			res = write(acceptfd, &read_buffer[cum], read_res);
-			syslog(LOG_DEBUG, "write to client res: %d", res);
+			// syslog(LOG_DEBUG, "write to client res: %d", res);
 			if (res==-1) {
 				if (errno == EAGAIN) {
 					continue;
 				}
+				syslog(LOG_ERR, "write: %s", strerror(errno));
 				exit(1);
 			}
 			cum += res;
@@ -252,6 +253,7 @@ int main(int argc, char *argv[]) {
 	}
 	syslog(LOG_DEBUG, "writeback fin" );
 
+	usleep(20000);
 	drop_client(addr_str, purge);
 	if (once){
 		break;
