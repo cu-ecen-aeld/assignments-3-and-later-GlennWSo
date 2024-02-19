@@ -207,11 +207,11 @@ int main(int argc, char *argv[]) {
 	}
 	fclose(dump_fd);
 	syslog(LOG_DEBUG, "fin listing");
-  // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
 	dump_fd = fopen(WRITEPATH, "r");
 	if (dump_fd == NULL) {
 		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
 	}
+	// rewind(dump_fd);
 
 
 	char read_buffer[100] = "";
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
 		// res = 0;
 		int cum = 0;
 		while (!terminate && ((buffer_size - 1) > cum)) {
-			res = write(acceptfd, &read_buffer[res], buffer_size-1);
+			res = write(acceptfd, &read_buffer[cum], buffer_size-1);
 			syslog(LOG_DEBUG, "write to client res: %d", res);
 			if (res==-1) {
 				if (errno == EAGAIN) {
@@ -249,7 +249,9 @@ int main(int argc, char *argv[]) {
 	syslog(LOG_DEBUG, "writeback fin" );
 
 	drop_client(addr_str);
-	break;
+	if (once){
+		break;
+	}
 	}
 	cleanup(purge);
 
