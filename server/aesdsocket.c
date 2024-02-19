@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
 	char c;
 	while (!terminate) {
 		gets_res = ngetc(acceptfd, &c);
-		syslog(LOG_DEBUG, "last res: %i", gets_res);
+		// syslog(LOG_DEBUG, "last res: %i", gets_res);
 		if (gets_res == 0) {
 			syslog(LOG_DEBUG, "Read EOF from socket");
 			break;
@@ -224,7 +224,7 @@ int main(int argc, char *argv[]) {
 	while (!terminate) {
 		// read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
 		read_res = fread(read_buffer, 1, buffer_size - 1,  dump_fd);
-		syslog(LOG_INFO, " file read_res: %lu", read_res);
+		// syslog(LOG_INFO, " file read_res: %lu", read_res);
 		if (read_res == 0) {
 			if (feof(dump_fd)) {
 				syslog(LOG_DEBUG, "eof reached");
