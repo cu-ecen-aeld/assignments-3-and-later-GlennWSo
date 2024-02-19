@@ -31,7 +31,6 @@ void cleanup() {
 void drop_client(char *addr, bool purge) {
 	syslog(LOG_INFO, "Closed connection from %s", addr);
 	syslog(LOG_DEBUG, "terminate: %d", terminate);
-	// fclose(client_file);
 	fclose(dump_fd);
 	close(acceptfd);
 	if (purge){ 
@@ -56,10 +55,6 @@ ssize_t ngetc(int fd, char *c){
 }
 
 int main(int argc, char *argv[]) {
-	// int domain, type, protocol;
-	// domain = AF_LOCAL;
-	// type = SOCK_STREAM;
-	// int protocol = 0; // IP
 	openlog(NULL, 0, LOG_USER);
 	if (signal(SIGINT | SIGTERM | SIGQUIT, catch_function) == SIG_ERR) {
 		perror("signal");
@@ -72,13 +67,11 @@ int main(int argc, char *argv[]) {
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
-	// hints.ai_protocol = 0;
 	
 	
   char port[100] = "9000";
   int res = getaddrinfo(NULL, port, &hints, &servinfo);
 	if (res != 0 ) {
-		// perror("getaddrinfo failed");
 		fprintf(stderr, "getaddrinfo failed: %s", strerror(-res));
 		exit(1);
 	}
@@ -142,16 +135,9 @@ int main(int argc, char *argv[]) {
 
    syslog(LOG_INFO, "listen ok\n");
 
-	// struct sockaddr_storage client_addr;
 	struct sockaddr client_addr;
 	socklen_t addr_size = sizeof(client_addr);
 
-	// int flags = fcntl(sockfd, F_GETFL, 0);
-	// res = fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
-	// if (res==-1) {
-	// 	syslog(LOG_ERR, "fcntl: %s", strerror(errno));
-	// 	exit(1);
-	// }
 	while (!terminate) {
 		acceptfd = accept(sockfd, &client_addr, &addr_size);
 		if (acceptfd==-1){
@@ -165,9 +151,6 @@ int main(int argc, char *argv[]) {
 		syslog(LOG_INFO, "accepted");
 		break;
 	};
-	// fcntl(sockfd, F_SETFL, flags);
-	// flags = fcntl(acceptfd, F_GETFL, 0);
-	// fcntl(acceptfd, F_SETFL, flags & (!O_NONBLOCK));
 
 	
 	//ref https://stackoverflow.com/questions/3060950/how-to-get-ip-address-from-sock-structure-in-c
@@ -185,12 +168,10 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	};
 
-	// client_file = fdopen(acceptfd, "r");
 	int gets_res;
 	char c;
 	while (!terminate) {
 		gets_res = ngetc(acceptfd, &c);
-		// syslog(LOG_DEBUG, "last res: %i", gets_res);
 		if (gets_res == 0) {
 			syslog(LOG_DEBUG, "Read EOF from socket");
 			break;
@@ -203,7 +184,6 @@ int main(int argc, char *argv[]) {
 			syslog(LOG_ERR, "ngetc: %s", strerror(errno));
 			exit(1);
 		}
-		// syslog(LOG_DEBUG, "last char: %c", c);
 		fputc(c, dump_fd);
 		if (c == '\n'){
 			break;
@@ -215,16 +195,13 @@ int main(int argc, char *argv[]) {
 	if (dump_fd == NULL) {
 		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
 	}
-	// rewind(dump_fd);
 
 
 	char read_buffer[100] = "";
   unsigned long buffer_size = sizeof(read_buffer);
 	unsigned long read_res;
 	while (!terminate) {
-		// read_res = fgets(&read_buffer[0], buffer_size, dump_fd);
 		read_res = fread(read_buffer, 1, buffer_size - 1,  dump_fd);
-		// syslog(LOG_INFO, " file read_res: %lu", read_res);
 		if (read_res == 0) {
 			if (feof(dump_fd)) {
 				syslog(LOG_DEBUG, "eof reached");
@@ -233,14 +210,10 @@ int main(int argc, char *argv[]) {
 			syslog(LOG_ERR, "fread: %s", strerror(errno));
 			exit(1);
 		}
-		// syslog(LOG_DEBUG, "read: %s", read_buffer);
-		// printf("read: %s", read_buffer);
 		read_buffer[read_res] = 0;
-		// res = 0;
 		int cum = 0;
 		while (!terminate && (read_res > cum)) {
 			res = write(acceptfd, &read_buffer[cum], read_res);
-			// syslog(LOG_DEBUG, "write to client res: %d", res);
 			if (res==-1) {
 				if (errno == EAGAIN) {
 					continue;
