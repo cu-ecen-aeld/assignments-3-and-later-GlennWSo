@@ -210,7 +210,19 @@ int main(int argc, char *argv[]) {
 		syslog(LOG_DEBUG, "read: %s", read_buffer);
 		// printf("read: %s", read_buffer);
 		read_buffer[read_res] = 0;
-		write(acceptfd, read_buffer, buffer_size-1);
+		// res = 0;
+		int cum = 0;
+		while (!terminate && ((buffer_size - 1) > cum)) {
+			res = write(acceptfd, &read_buffer[res], buffer_size-1);
+			syslog(LOG_DEBUG, "write to client res: %d", res);
+			if (res==-1) {
+				if (errno == EAGAIN) {
+					continue;
+				}
+				exit(1);
+			}
+			cum += res;
+		}
 	}
 
 	cleanup(purge);
