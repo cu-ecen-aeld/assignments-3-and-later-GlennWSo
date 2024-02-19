@@ -34,7 +34,7 @@ void drop_client() {
 	syslog(LOG_DEBUG, "dropping client");
 	// fcntl(sockfd, F_SETFL, flags);
 	syslog(LOG_DEBUG, "terminate: %d", terminate);
-	fclose(client_file);
+	// fclose(client_file);
 	fclose(dump_fd);
 	close(acceptfd);
 	
@@ -238,7 +238,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	syslog(LOG_DEBUG, "writeback fin" );
-	exit(1);
 
 	drop_client();
 	}
