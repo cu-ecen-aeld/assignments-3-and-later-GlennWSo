@@ -20,18 +20,26 @@ FILE *dump_fd;
 struct addrinfo *servinfo;
 const char WRITEPATH[] ="/var/tmp/aesdsocketdata";
 
+static bool terminate = false;
+static bool purge = false;
 void cleanup(bool purge) {
 	syslog(LOG_DEBUG, "cleaning up");
+	close(sockfd);
+	freeaddrinfo(servinfo);
+	if (purge){ 
+		remove(WRITEPATH);
+	}
+};
+void drop_client() {
+	syslog(LOG_DEBUG, "dropping client");
+	// fcntl(sockfd, F_SETFL, flags);
+	syslog(LOG_DEBUG, "terminate: %d", terminate);
 	fclose(client_file);
 	fclose(dump_fd);
 	close(acceptfd);
-	close(sockfd);
-	freeaddrinfo(servinfo);
-	remove(WRITEPATH);
-};
+	
+}
 
-static bool terminate = false;
-static bool purge = false;
 static void catch_function(int signo) {
 	syslog(LOG_INFO, "Caught signal, exiting");
 	syslog(LOG_DEBUG, "signo: %d", signo);
@@ -91,7 +99,7 @@ int main(int argc, char *argv[]) {
 
 	sockfd = socket(
 		servinfo->ai_family,
-		servinfo->ai_socktype,
+		servinfo->ai_socktype | SOCK_NONBLOCK,
 		servinfo->ai_protocol
 	);
 	if (sockfd == -1 ) {
@@ -111,6 +119,8 @@ int main(int argc, char *argv[]) {
 	}
    syslog(LOG_INFO, "bind ok\n");
 
+	while (!terminate) {
+	syslog(LOG_DEBUG, "main loop");
 	res = listen(sockfd, 10);
 	if (res != 0 ) {
 		syslog(LOG_ERR, "listen failed: %s", strerror(errno));
@@ -123,12 +133,12 @@ int main(int argc, char *argv[]) {
 	struct sockaddr client_addr;
 	socklen_t addr_size = sizeof(client_addr);
 
-	int flags = fcntl(sockfd, F_GETFL, 0);
-	res = fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
-	if (res==-1) {
-		syslog(LOG_ERR, "fcntl: %s", strerror(errno));
-		exit(1);
-	}
+	// int flags = fcntl(sockfd, F_GETFL, 0);
+	// res = fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+	// if (res==-1) {
+	// 	syslog(LOG_ERR, "fcntl: %s", strerror(errno));
+	// 	exit(1);
+	// }
 	while (!terminate) {
 		acceptfd = accept(sockfd, &client_addr, &addr_size);
 		if (acceptfd==-1){
@@ -188,12 +198,12 @@ int main(int argc, char *argv[]) {
 	}
 	fclose(dump_fd);
 	syslog(LOG_DEBUG, "fin listing");
-
   // TODO f. Returns the full content of /var/tmp/aesdsocketdata to the client as soon as the received data packet completes.
 	dump_fd = fopen(WRITEPATH, "r");
 	if (dump_fd == NULL) {
 		syslog(LOG_ERR, "fopen error:%s", strerror(errno));
 	}
+
 
 	char read_buffer[100] = "";
   unsigned long buffer_size = sizeof(read_buffer);
@@ -227,7 +237,11 @@ int main(int argc, char *argv[]) {
 			cum += res;
 		}
 	}
+	syslog(LOG_DEBUG, "writeback fin" );
+	exit(1);
 
+	drop_client();
+	}
 	cleanup(purge);
 
 }
