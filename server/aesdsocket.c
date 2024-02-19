@@ -23,20 +23,20 @@ const char WRITEPATH[] ="/var/tmp/aesdsocketdata";
 static bool terminate = false;
 static bool purge = false;
 static bool once = false;
-void cleanup(bool purge) {
+void cleanup() {
 	syslog(LOG_DEBUG, "cleaning up");
 	close(sockfd);
 	freeaddrinfo(servinfo);
-	if (purge){ 
-		remove(WRITEPATH);
-	}
 };
-void drop_client(char *addr) {
+void drop_client(char *addr, bool purge) {
 	syslog(LOG_INFO, "Closed connection from %s", addr);
 	syslog(LOG_DEBUG, "terminate: %d", terminate);
 	// fclose(client_file);
 	fclose(dump_fd);
 	close(acceptfd);
+	if (purge){ 
+		remove(WRITEPATH);
+	}
 }
 
 static void catch_function(int signo) {
@@ -94,10 +94,14 @@ int main(int argc, char *argv[]) {
 			};
 		}
 		if ( 0==strcmp(arg, "--clear") ) {
-			printf("clearing dump file: %s\n", WRITEPATH);
+			printf("clearing dump file before accepting clients: %s\n", WRITEPATH);
 			if (remove(WRITEPATH)){
 				perror("remove");
 			};
+		}
+		if ( 0==strcmp(arg, "--purge") ) {
+			printf("clear dump file after clients: %s\n", WRITEPATH);
+			purge = true;
 		}
 		if ( 0==strcmp(arg, "--once") ) {
 			printf("once mode: will exit after first client\n");
@@ -234,8 +238,8 @@ int main(int argc, char *argv[]) {
 		read_buffer[read_res] = 0;
 		// res = 0;
 		int cum = 0;
-		while (!terminate && ((buffer_size - 1) > cum)) {
-			res = write(acceptfd, &read_buffer[cum], buffer_size-1);
+		while (!terminate && (read_res > cum)) {
+			res = write(acceptfd, &read_buffer[cum], read_res);
 			syslog(LOG_DEBUG, "write to client res: %d", res);
 			if (res==-1) {
 				if (errno == EAGAIN) {
@@ -248,12 +252,12 @@ int main(int argc, char *argv[]) {
 	}
 	syslog(LOG_DEBUG, "writeback fin" );
 
-	drop_client(addr_str);
+	drop_client(addr_str, purge);
 	if (once){
 		break;
 	}
 	}
-	cleanup(purge);
+	cleanup();
 
 }
 
