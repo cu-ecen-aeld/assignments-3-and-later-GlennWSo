@@ -13,7 +13,7 @@ CC=gcc make aesdsocket
 
 
 rm res.txt
-./aesdsocket -d && cat test.txt | nc localhost 9000 > res.txt
+./aesdsocket -d --once --clear && cat test.txt | nc localhost 9000 > res.txt
 
 res=$(cat res.txt)
 expected="0123456789"
