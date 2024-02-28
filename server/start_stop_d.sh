@@ -2,24 +2,27 @@
 
 #start
 
+PID_FILE=/tmp/aesdsocket_pid
+
+
 for arg in $@
 do
   echo $arg
   if [ "$arg" = "-S" ]; then
     echo starting
-    if [ -e /var/tmp/aesdsocket_pid ]; then
-      echo /var/tmp/aesdsocket_pid already exists, exiting...
+    if [ -e $PID_FILE ]; then
+      echo $PID_FILE already exists, exiting...
       exit 1
     fi
     ./aesdsocket -d 
     echo new pid:
-    cat /var/tmp/aesdsocket_pid
+    cat $PID_FILE
   fi
   if [ "$arg" = "-K" ]; then
     echo stopping
-    if [ -e /var/tmp/aesdsocket_pid ]; then
+    if [ -e $PID_FILE ]; then
       echo sending TERM to socket-server
-      kill -s TERM $(cat /var/tmp/aesdsocket_pid)
+      kill -s TERM $(cat $PID_FILE)
       exit 0
     fi
     echo cant find pid

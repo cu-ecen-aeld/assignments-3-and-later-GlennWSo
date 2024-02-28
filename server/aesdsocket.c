@@ -22,7 +22,7 @@ const char WRITEPATH[] = "/var/tmp/aesdsocketdata";
 static bool terminate = false;
 static bool purge = false;
 static bool once = false;
-char PID_PATH[] = "/var/tmp/aesdsocket_pid";
+char PID_PATH[] = "/tmp/aesdsocket_pid";
 void cleanup() {
   syslog(LOG_DEBUG, "cleaning up");
   close(sockfd);
